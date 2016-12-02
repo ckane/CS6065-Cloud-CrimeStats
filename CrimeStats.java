@@ -12,6 +12,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class CrimeStats {
+  // Stats intended to help compute average
+  public static int count = 0;
+  public static int totsum = 0;
+
   public static class CrimeRowMapper extends Mapper<Object,CrimeRow,Text,IntWritable> {
     public void map(Object key, CrimeRow value, Context context)
         throws IOException, InterruptedException {
@@ -26,7 +30,17 @@ public class CrimeStats {
       for(IntWritable i : values) {
         sum += i.get();
       };
+      // Output the per-crime count statistic
       context.write(key, new IntWritable(sum));
+
+      // Keep (global) count of the number of distinct crimes
+      count += 1;
+
+      // Keep running sum of total incidents
+      totsum += sum;
+
+      // Iteratively determine the global Average (incidents)/(crime type)
+      context.write(new Text("Average"), new IntWritable(totsum/count));
     };
   };
 
